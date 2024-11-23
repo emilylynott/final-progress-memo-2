@@ -30,3 +30,27 @@ citation-location: margin
 [Emily's GitHub Repo](https://github.com/emilylynott/final-progress-memo-2.git)
 
 :::
+
+```{r}
+#| label: loading
+#| echo: false
+
+library(tidyverse)
+
+alcohol_gho <- readxl::read_xlsx("data/data.xlsx")
+
+```
+```{r}
+#| label: cleaning
+#| echo: false
+
+# pivot wider, factoring
+alcohol_gho_tidy <- alcohol_gho |>
+  pivot_wider(
+    names_from = "dimension", 
+    values_from = "subgroup") |>
+  mutate(indicator_name = factor(indicator_name))
+  
+  
+```
+
