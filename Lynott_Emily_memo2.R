@@ -1,7 +1,7 @@
 ## load packages ----
 library(tidyverse)
-library(sf)
-library(maps)
+alcohol_gho <- readxl::read_xlsx("data/data.xlsx")
+
 
 ## tidying ----
 alcohol_gho_tidy <- alcohol_gho |>
@@ -48,22 +48,91 @@ alcohol_gho_tidy <- alcohol_gho |>
   # names <- alcohol_gho_tidy |>
 #   distinct(indicator_name)
 
-## regional analysis ----
-
-regions_bar <- alcohol_gho_tidy |>
+tidy_general<- alcohol_gho_tidy |>
   filter(
     indicator_behavior %in% c(
       "% abstainers, lifetime", 
       "% abstainers, past 12 mo", 
       "% consumers, past 12 mo", 
       "% former drinkers"
-      )
-    ) |>
+    )
+  )
+
+tidy_general |>
+  select(indicator_behavior, estimate) |>
+  group_by(indicator_behavior) |>
+  ggplot(aes(x = indicator_behavior, y = estimate)) +
+  geom_boxplot()
+
+tidy_general |>
+  select(indicator_behavior, estimate) |>
+  group_by(indicator_behavior) |>
+  summarize(
+    median_estimate = median(estimate, na.rm = TRUE), 
+    IQR_estimate = IQR(estimate, na.rm = TRUE),
+    min_estimate = min(estimate, na.rm = TRUE),
+    max_estimate = max(estimate, na.rm = TRUE)
+  ) |>
+  knitr::kable()
+
+## income analysis
+
+gen_income <- tidy_general |>
+  select(indicator_behavior, wbincome2024, estimate) |>
+  drop_na(wbincome2024) |>
+  group_by(indicator_behavior, wbincome2024) |>
+  summarize(avg_pct = mean(estimate, na.rm = TRUE), .groups = "drop") |>
+gen_income |>  
+  ggplot(aes(x = indicator_behavior, y = avg_pct)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~ wbincome2024, ncol = 2) +
+  coord_flip()
+
+gen_income |>
+  pivot_wider(
+    names_from = "indicator_behavior", 
+    values_from = "avg_pct"
+  ) |>
+  knitr::kable(caption = "Table 1: Average % of population engaging in indicator behavior by income")
+
+## regional analysis ----
+
+gen_regions <- tidy_general |>
   select(indicator_behavior, whoreg6, estimate) |>
   group_by(indicator_behavior, whoreg6) |>
-  summarize(avg_pct = mean(estimate, na.rm = TRUE), .groups = "drop") |>
+  summarize(avg_pct = mean(estimate, na.rm = TRUE), .groups = "drop") 
+
+gen_regions |>
   ggplot(aes(x = indicator_behavior, y = avg_pct)) + 
   geom_bar(stat = "identity") + 
   facet_wrap(~ whoreg6, ncol = 2) +
   coord_flip()
-regions_bar
+
+gen_regions |>
+  pivot_wider(
+    names_from = "indicator_behavior", 
+    values_from = "avg_pct"
+  ) |>
+  knitr::kable()
+
+## european countries
+
+tidy_general |>
+  select(
+    indicator_behavior, 
+    whoreg6, 
+    setting, 
+    setting_average
+  ) |>
+  filter(whoreg6 == "European") |>
+  summarize(
+    setting_average = mean(setting_average), 
+    .by = c(indicator_behavior, setting)
+  ) |>
+  pivot_wider(
+    names_from = "indicator_behavior", 
+    values_from = "setting_average"
+  ) |>
+  arrange(desc(!!sym("% consumers, past 12 mo"))) |>
+  slice_head(n = 10) |>
+  knitr::kable()
