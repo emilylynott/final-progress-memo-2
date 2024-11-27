@@ -89,6 +89,8 @@ alcohol_gho_tidy <- alcohol_gho |>
 
 ## General Population Analysis
 
+I wanted to  begin my EDA looking at some of the variables that seemed to more generally describe each population. My main goal in doing this was to have a better understanding of how alcohol consumption is distributed, overall and in the context of some other factors. The initial distribution is analyzed through a boxplot and summary statistics below. 
+
 ```{r}
 #| label: general
 #| echo: false
@@ -107,7 +109,12 @@ tidy_general |>
   select(indicator_behavior, estimate) |>
   group_by(indicator_behavior) |>
   ggplot(aes(x = indicator_behavior, y = estimate)) +
-  geom_boxplot()  
+  geom_boxplot() + 
+  labs(
+    title = "Distribution of Percents of Consumption Behaviors in Populations", 
+    x = "Indicator Behavior", 
+    y = "Estimated Percent")
+  
 
 tidy_general |>
   select(indicator_behavior, estimate) |>
@@ -118,11 +125,15 @@ tidy_general |>
     min_estimate = min(estimate, na.rm = TRUE),
     max_estimate = max(estimate, na.rm = TRUE)
   ) |>
-  knitr::kable()
+  knitr::kable(caption = "Table 1: Summary Statistics for percents of populations with alcohol consumption behaviors") 
 
 ```
 
+This analysis displays that the median percent of consumers in the past 12 months is 37.5. This is very similar to the median percent of lifetime abstainers (39) but only about 60% of those abstaining for the past 12 months (62.35%). The median percent of former drinkers is just under half of the percent of consumers at 19.95%. 
+
 ## Income Analysis
+
+The first variable I wanted to examine in the context of those that drink and those that do not was income since income is a large marker of inequity in adult health. The only income bracket with a higher average percent of consumers than abstainers was a high income. 
 
 ```{r}
 #| label: income
@@ -138,20 +149,25 @@ gen_income |>
   ggplot(aes(x = indicator_behavior, y = avg_pct)) + 
   geom_bar(stat = "identity") + 
   facet_wrap(~ wbincome2024, ncol = 2) +
-  coord_flip()
+  coord_flip() + 
+  labs(
+    title = "Average % of population engaging in indicator behavior by income", 
+    x = "Average Percent", 
+    y = "Indicator Behavior")
 
 gen_income |>
   pivot_wider(
     names_from = "indicator_behavior", 
     values_from = "avg_pct"
   ) |>
-  knitr::kable(caption = "Table 1: Average % of population engaging in indicator behavior by income")
-
+  knitr::kable(caption = "Table 2: Average % of population engaging in indicator behavior by income")
 
 ```
 
 
 ## Regional Analysis
+
+Next, I examined the different regions identified in the dataset. My main goal with this analysis was to determine which countries I might want to examine further, based on which countries seem to have higher alcohol consumption. My initial finding was that European settings have the highest average percent of consumers at 60.75%. This is also the only region where consumption is the behavior that represents the largest portion of the population. 
 
 ```{r}
 #| label: regions
@@ -166,18 +182,24 @@ gen_regions |>
   ggplot(aes(x = indicator_behavior, y = avg_pct)) + 
   geom_bar(stat = "identity") + 
   facet_wrap(~ whoreg6, ncol = 2) +
-  coord_flip()
+  coord_flip() + 
+  labs(
+    title = "Average % of population engaging in indicator behavior by region", 
+    x = "Average Percent", 
+    y = "Indicator Behavior")
 
 gen_regions |>
   pivot_wider(
     names_from = "indicator_behavior", 
     values_from = "avg_pct"
   ) |>
-  knitr::kable(caption = "Table 1: Average % of population engaging in indicator behavior by region")
+  knitr::kable(caption = "Table 3: Average % of population engaging in indicator behavior by region")
 
 ```
 
 ## European Countries
+
+To gain a better understanding of consumption in the European region, I gathered the average percents of each behavior in this focus by setting. I then sorted them by percent of consumers, and determined that Luxembourg has the highest average percent of consumers at 91.8%. 
 
 ```{r}
 #| label: europe
@@ -201,7 +223,14 @@ tidy_general |>
   ) |>
   arrange(desc(!!sym("% consumers, past 12 mo"))) |>
   slice_head(n = 10) |>
-  knitr::kable()
+  knitr::kable(caption = "Table 4: Average % of population engaging in indicator behavior by European country")
 
 ```
 
+## Summary and Next Steps
+
+Throughout this initial EDA I have gained a better understanding of focus groups that I may want to further examine using other indicator behaviors. Specifically in these higher consuming european settings, I would like to examine the level to which drinking is occurring and if there is fatality involved. 
+
+I think it would be beneficial, however, to find where the highest-consuming settings are within each reagion to examine through multivariate analysis if there are connections to variables like gender, age, or income. I think it will be useful to subset the tidied data into categories of behaviors a I did for this more general analysis, accounting for behaviors associated with given ages or outcomes to organize myself as I carry our these analyses. 
+
+I would also like to make use of maps to facilitate these visualizations. I think it would be valuable to both pinpoint where certain behaviors are present and also the distribution of values throughout the settings. 
